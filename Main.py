@@ -18,9 +18,13 @@ Data visualization/analysis of Facebook Messenger data from 2011-08-09 to 2020-0
 if __name__ == '__main__':
     print(str(datetime.datetime.now()) + ': Started')
 
-    # The key for the individualConv or groupConv dictionaries storing the codes for my specific conversations
+    # The key for the conversation dictionary storing the codes for my specific conversations
     name = 'Anonymous'
+    convType = 'Individual'
     outputDir = 'Output/' + name + '/'
+
+    # Make sure that the conversation type is correct
+    assert convType == 'Individual' or convType == 'Group'
 
     # Create output directory if it does not exist
     Path(outputDir).mkdir(parents=True, exist_ok=True)
@@ -33,7 +37,7 @@ if __name__ == '__main__':
     convIndex = 1
     while convIndex > 0:
         try:
-            convName = 'messages/inbox/' + individualConv[name] + '/message_' + str(convIndex) + '.json'
+            convName = 'messages/inbox/' + conversations[convType][name] + '/message_' + str(convIndex) + '.json'
             convRaw = archive.open(convName).read()
             jsonConvList += [json.loads(convRaw)]
             convIndex += 1
@@ -45,9 +49,13 @@ if __name__ == '__main__':
     participantDict = {participant: {} for participant in participantList}
 
     messagesPerDayDict = messagesPerDay(jsonConvList, participantDict.copy())
-    graphTwoParticipantTimeSeries(messagesPerDayDict, 'Number of Messages', outputDir)
-
     wordsPerDayDict = wordsPerDay(jsonConvList, participantDict.copy())
-    graphTwoParticipantTimeSeries(wordsPerDayDict, 'Number of Words', outputDir)
+
+    if convType == 'Individual':
+        graphIndividualConvTimeSeries(messagesPerDayDict, 'Number of Messages', outputDir)
+        graphIndividualConvTimeSeries(wordsPerDayDict, 'Number of Words', outputDir)
+    else:
+        graphGroupConvTimeSeries(messagesPerDayDict, 'Number of Messages', outputDir)
+        graphGroupConvTimeSeries(wordsPerDayDict, 'Number of Words', outputDir)
 
     print(str(datetime.datetime.now()) + ': Finished')
