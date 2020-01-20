@@ -19,3 +19,4 @@
 *.log
 *.zip
 BookmarkedConversations.py
+Output/*
