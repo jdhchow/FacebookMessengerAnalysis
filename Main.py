@@ -1,7 +1,7 @@
 import zipfile
 import json
+import copy
 from pathlib import Path
-from Graphing import *
 from FeatureExtraction import *
 from BookmarkedConversations import *
 
@@ -19,9 +19,10 @@ if __name__ == '__main__':
     print(str(datetime.datetime.now()) + ': Started')
 
     # The key for the conversation dictionary storing the codes for my specific conversations
-    name = 'Anonymous'
+    convName = 'Anonymous'
+    me = 'Jonathan Chow'
     convType = 'Individual'
-    outputDir = 'Output/' + name + '/'
+    outputDir = 'Output/' + convName + '/'
 
     # Make sure that the conversation type is correct
     assert convType == 'Individual' or convType == 'Group'
@@ -37,8 +38,8 @@ if __name__ == '__main__':
     convIndex = 1
     while convIndex > 0:
         try:
-            convName = 'messages/inbox/' + conversations[convType][name] + '/message_' + str(convIndex) + '.json'
-            convRaw = archive.open(convName).read()
+            convID = 'messages/inbox/' + conversations[convType][convName] + '/message_' + str(convIndex) + '.json'
+            convRaw = archive.open(convID).read()
             jsonConvList += [json.loads(convRaw)]
             convIndex += 1
         except KeyError:
@@ -48,14 +49,10 @@ if __name__ == '__main__':
     participantList = list(set(parDict['name'] for conversation in jsonConvList for parDict in conversation['participants']))
     participantDict = {participant: {} for participant in participantList}
 
-    messagesPerDayDict = messagesPerDay(jsonConvList, participantDict.copy())
-    wordsPerDayDict = wordsPerDay(jsonConvList, participantDict.copy())
-
-    if convType == 'Individual':
-        graphIndividualConvTimeSeries(messagesPerDayDict, 'Number of Messages', outputDir)
-        graphIndividualConvTimeSeries(wordsPerDayDict, 'Number of Words', outputDir)
-    else:
-        graphGroupConvTimeSeries(messagesPerDayDict, 'Number of Messages', outputDir)
-        graphGroupConvTimeSeries(wordsPerDayDict, 'Number of Words', outputDir)
+    messagesPerDay(jsonConvList, copy.deepcopy(participantDict), outputDir, me, convType)
+    wordsPerDay(jsonConvList, copy.deepcopy(participantDict), outputDir, me, convType)
+    cumMessageDiff(jsonConvList, copy.deepcopy(participantDict), outputDir, me)
+    cumWordDiff(jsonConvList, copy.deepcopy(participantDict), outputDir, me)
+    avgWordsPerMessage(jsonConvList, copy.deepcopy(participantDict), outputDir, me, convType)
 
     print(str(datetime.datetime.now()) + ': Finished')
