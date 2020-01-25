@@ -1,5 +1,4 @@
-import pandas as pd
-import random
+import numpy as np
 from matplotlib import pyplot as plt
 
 
@@ -12,38 +11,29 @@ Functions for graphing the conversation features
 '''
 
 
-# Graph data for two participant conversation
-def graphIndividualConvTimeSeries(featureDict, yAxisName, savePath, selfName):
-    graphAssistantDF = pd.DataFrame()
+# Get range of colours from 'darkblue' to 'tomato'
+def list2Colour(listLen):
+    startColour = (1.0, 0.38823529411764707, 0.2784313725490196)
+    endColour = (0.0, 0.0, 0.5450980392156862)
 
-    for participant in featureDict:
-        temp = pd.DataFrame(featureDict[participant], index=[participant]).transpose()
-        graphAssistantDF = pd.concat([graphAssistantDF, temp], sort=True, ignore_index=False, axis=1)
+    rgb = np.array([np.linspace(sc, ec, listLen) for sc, ec in zip(startColour, endColour)])
 
-    # Add zeros for dates when one party sent no messages
-    graphAssistantDF = graphAssistantDF.fillna(0)
+    return [tuple(rgb[:, cIndex]) for cIndex in range(0, listLen)]
 
-    # Add missing dates as zeros for both parties
-    idx = pd.date_range(list(graphAssistantDF.index)[0], list(graphAssistantDF.index)[-1])
-    graphAssistantDF = graphAssistantDF.reindex(idx, fill_value=0)
 
+# Graph two timeseries
+def graphReflectedTimeSeries(featureDF, yAxisName, savePath, selfName):
     # Reflect the feature corresponding to me
-    graphAssistantDF[selfName] = -graphAssistantDF[selfName]
+    featureDF[selfName] = -featureDF[selfName]
 
     plt.figure(figsize=(12, 5), dpi=250)
     plt.xlabel('Date')
     plt.ylabel(yAxisName)
     plt.title('Analysis of Facebook Messages (2011-08-09 to 2020-01-20)')
 
-    # # One style of plotting
-    # plt.scatter(list(graphAssistantDF.index), graphAssistantDF.iloc[:, 0],
-    #             color='darkblue', label=graphAssistantDF.columns[0], marker='.')
-    # plt.scatter(list(graphAssistantDF.index), graphAssistantDF.iloc[:, 1],
-    #             color='tomato', label=graphAssistantDF.columns[1], marker='.')
-
-    plt.plot(list(graphAssistantDF.index), graphAssistantDF.loc[:, graphAssistantDF.columns != selfName],
-             color='darkblue', label=[x for x in graphAssistantDF.columns if x != selfName][0])
-    plt.plot(list(graphAssistantDF.index), graphAssistantDF[selfName],
+    plt.plot(list(featureDF.index), featureDF.loc[:, featureDF.columns != selfName],
+             color='darkblue', label=[x for x in featureDF.columns if x != selfName][0])
+    plt.plot(list(featureDF.index), featureDF[selfName],
              color='tomato', label=selfName)
 
     plt.grid(True)
@@ -62,86 +52,29 @@ def graphIndividualConvTimeSeries(featureDict, yAxisName, savePath, selfName):
     plt.savefig(savePath + yAxisName + '.png')
 
 
-# Graph data for group conversations
-def graphGroupConvTimeSeries(featureDict, yAxisName, savePath):
-    graphAssistantDF = pd.DataFrame()
-
-    for participant in featureDict:
-        temp = pd.DataFrame(featureDict[participant], index=[participant]).transpose()
-        graphAssistantDF = pd.concat([graphAssistantDF, temp], sort=True, ignore_index=False, axis=1)
-
-    # Add zeros for dates when a party sent no messages
-    graphAssistantDF = graphAssistantDF.fillna(0)
-
-    # Add missing dates as zeros for all parties
-    idx = pd.date_range(list(graphAssistantDF.index)[0], list(graphAssistantDF.index)[-1])
-    graphAssistantDF = graphAssistantDF.reindex(idx, fill_value=0)
-
-    plt.figure(figsize=(12, 5), dpi=250)
-    plt.xlabel('Date')
-    plt.ylabel(yAxisName)
-    plt.title('Analysis of Facebook Messages (2011-08-09 to 2020-01-20)')
-
-    for participantIndex in range(0, len(featureDict)):
-        rndColour = (random.random(), random.random(), random.random())
-
-        plt.plot(list(graphAssistantDF.index), graphAssistantDF.iloc[:, participantIndex],
-                 color=rndColour, alpha=0.5, label=graphAssistantDF.columns[participantIndex])
-
-    plt.grid(True)
-
-    handles, labels = plt.gca().get_legend_handles_labels()
-
-    plt.legend(handles, labels, loc='upper left')
-    plt.savefig(savePath + yAxisName + '.png')
-
-
-# Graph data for group conversations
+# Graph single timeseries
 def graphSeries(featureSeries, yAxisName, savePath):
     plt.figure(figsize=(12, 5), dpi=250)
     plt.xlabel('Date')
     plt.ylabel(yAxisName)
     plt.title('Analysis of Facebook Messages (2011-08-09 to 2020-01-20)')
-
     plt.plot(list(featureSeries.index), featureSeries, color='darkblue')
-
     plt.grid(True)
-
     plt.savefig(savePath + yAxisName + '.png')
 
 
-# Graph data for two participant conversation
-def graphIndividualCumMeanTimeSeries(graphAssistantDF, yAxisName, savePath, selfName):
+# Graph n overlapping timeseries
+def graphOverlappingTimeSeries(featureDF, yAxisName, savePath):
     plt.figure(figsize=(12, 5), dpi=250)
     plt.xlabel('Date')
     plt.ylabel(yAxisName)
     plt.title('Analysis of Facebook Messages (2011-08-09 to 2020-01-20)')
 
-    plt.plot(list(graphAssistantDF.index), graphAssistantDF.loc[:, graphAssistantDF.columns != selfName],
-             color='darkblue', label=[x for x in graphAssistantDF.columns if x != selfName][0])
-    plt.plot(list(graphAssistantDF.index), graphAssistantDF[selfName],
-             color='tomato', label=selfName)
+    colourList = list2Colour(len(featureDF.columns))
 
-    plt.grid(True)
-
-    handles, labels = plt.gca().get_legend_handles_labels()
-
-    plt.legend(handles, labels, loc='upper left')
-    plt.savefig(savePath + yAxisName + '.png')
-
-
-# Graph data for group conversations
-def graphGroupCumMeanTimeSeries(graphAssistantDF, yAxisName, savePath):
-    plt.figure(figsize=(12, 5), dpi=250)
-    plt.xlabel('Date')
-    plt.ylabel(yAxisName)
-    plt.title('Analysis of Facebook Messages (2011-08-09 to 2020-01-20)')
-
-    for participantIndex in range(0, len(graphAssistantDF.columns)):
-        rndColour = (random.random(), random.random(), random.random())
-
-        plt.plot(list(graphAssistantDF.index), graphAssistantDF.iloc[:, participantIndex],
-                 color=rndColour, alpha=0.5, label=graphAssistantDF.columns[participantIndex])
+    for participantIndex in range(0, len(featureDF.columns)):
+        plt.plot(list(featureDF.index), featureDF.iloc[:, participantIndex],
+                 color=colourList[participantIndex], label=featureDF.columns[participantIndex])
 
     plt.grid(True)
 

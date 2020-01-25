@@ -1,4 +1,5 @@
 import datetime
+import pandas as pd
 from Graphing import *
 
 
@@ -18,6 +19,16 @@ def ms2dt(milliseconds):
     return datetime.datetime.fromtimestamp(s)
 
 
+def featureDict2DF(featureDict):
+    featureDF = pd.DataFrame()
+
+    for participant in featureDict:
+        temp = pd.DataFrame(featureDict[participant], index=[participant]).transpose()
+        featureDF = pd.concat([featureDF, temp], sort=True, ignore_index=False, axis=1)
+
+    return featureDF
+
+
 # Construct timeseries of the number of messages sent per day for each participant
 def messagesPerDay(conversationList, featureDict, outputPath, self, indOrGroup):
     for conversation in conversationList:
@@ -27,10 +38,19 @@ def messagesPerDay(conversationList, featureDict, outputPath, self, indOrGroup):
             except KeyError:
                 featureDict[message['sender_name']][ms2dt(message['timestamp_ms']).date()] = 1
 
+    featureDF = featureDict2DF(featureDict)
+
+    # Add zeros for dates when a party sent no messages
+    featureDF = featureDF.fillna(0)
+
+    # Add missing dates as zeros for all parties
+    idx = pd.date_range(list(featureDF.index)[0], list(featureDF.index)[-1])
+    featureDF = featureDF.reindex(idx, fill_value=0)
+
     if indOrGroup == 'Individual':
-        graphIndividualConvTimeSeries(featureDict, 'Number of Messages', outputPath, self)
+        graphReflectedTimeSeries(featureDF, 'Number of Messages', outputPath, self)
     else:
-        graphGroupConvTimeSeries(featureDict, 'Number of Messages', outputPath)
+        graphOverlappingTimeSeries(featureDF, 'Number of Messages', outputPath)
 
 
 # Make timeseries of the number of words sent per day for each participant
@@ -43,10 +63,19 @@ def wordsPerDay(conversationList, featureDict, outputPath, self, indOrGroup):
                 except KeyError:
                     featureDict[message['sender_name']][ms2dt(message['timestamp_ms']).date()] = len(message['content'].split(' '))
 
+    featureDF = featureDict2DF(featureDict)
+
+    # Add zeros for dates when a party sent no messages
+    featureDF = featureDF.fillna(0)
+
+    # Add missing dates as zeros for all parties
+    idx = pd.date_range(list(featureDF.index)[0], list(featureDF.index)[-1])
+    featureDF = featureDF.reindex(idx, fill_value=0)
+
     if indOrGroup == 'Individual':
-        graphIndividualConvTimeSeries(featureDict, 'Number of Words', outputPath, self)
+        graphReflectedTimeSeries(featureDF, 'Number of Words', outputPath, self)
     else:
-        graphGroupConvTimeSeries(featureDict, 'Number of Words', outputPath)
+        graphOverlappingTimeSeries(featureDF, 'Number of Words', outputPath)
 
 
 # Make timeseries of the cumulative word difference between me and average words sent by other participants
@@ -56,11 +85,7 @@ def cumWordDiff(conversationList, featureDict, outputPath, self):
             if 'content' in message:
                 featureDict[message['sender_name']][ms2dt(message['timestamp_ms'])] = len(message['content'].split(' '))
 
-    featureDF = pd.DataFrame()
-
-    for participant in featureDict:
-        temp = pd.DataFrame(featureDict[participant], index=[participant]).transpose()
-        featureDF = pd.concat([featureDF, temp], sort=True, ignore_index=False, axis=1)
+    featureDF = featureDict2DF(featureDict)
 
     # Add zeros for dates when one party sent no messages
     featureDF = featureDF.fillna(0)
@@ -77,11 +102,7 @@ def cumMessageDiff(conversationList, featureDict, outputPath, self):
         for message in conversation['messages']:
             featureDict[message['sender_name']][ms2dt(message['timestamp_ms'])] = 1
 
-    featureDF = pd.DataFrame()
-
-    for participant in featureDict:
-        temp = pd.DataFrame(featureDict[participant], index=[participant]).transpose()
-        featureDF = pd.concat([featureDF, temp], sort=True, ignore_index=False, axis=1)
+    featureDF = featureDict2DF(featureDict)
 
     # Add zeros for dates when one party sent no messages
     featureDF = featureDF.fillna(0)
@@ -99,16 +120,9 @@ def avgWordsPerMessage(conversationList, featureDict, outputPath, self, indOrGro
             if 'content' in message:
                 featureDict[message['sender_name']][ms2dt(message['timestamp_ms'])] = len(message['content'].split(' '))
 
-    featureDF = pd.DataFrame()
-
-    for participant in featureDict:
-        temp = pd.DataFrame(featureDict[participant], index=[participant]).transpose()
-        featureDF = pd.concat([featureDF, temp], sort=True, ignore_index=False, axis=1)
+    featureDF = featureDict2DF(featureDict)
 
     # Get the running average of words per message
     featureDF = featureDF.expanding().mean()
 
-    if indOrGroup == 'Individual':
-        graphIndividualCumMeanTimeSeries(featureDF, 'Running Average of Words Per Message', outputPath, self)
-    else:
-        graphGroupCumMeanTimeSeries(featureDF, 'Running Average of Words Per Message', outputPath)
+    graphOverlappingTimeSeries(featureDF, 'Running Average of Words Per Message', outputPath)
