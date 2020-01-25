@@ -19,12 +19,17 @@ def ms2dt(milliseconds):
     return datetime.datetime.fromtimestamp(s)
 
 
-def featureDict2DF(featureDict):
+def featureDict2DF(featureDict, self):
     featureDF = pd.DataFrame()
 
     for participant in featureDict:
         temp = pd.DataFrame(featureDict[participant], index=[participant]).transpose()
         featureDF = pd.concat([featureDF, temp], sort=True, ignore_index=False, axis=1)
+
+    otherParticipants = list(featureDF.columns)
+    otherParticipants.remove(self)
+
+    featureDF = featureDF[otherParticipants + [self]]
 
     return featureDF
 
@@ -38,7 +43,7 @@ def messagesPerDay(conversationList, featureDict, outputPath, self, indOrGroup):
             except KeyError:
                 featureDict[message['sender_name']][ms2dt(message['timestamp_ms']).date()] = 1
 
-    featureDF = featureDict2DF(featureDict)
+    featureDF = featureDict2DF(featureDict, self)
 
     # Add zeros for dates when a party sent no messages
     featureDF = featureDF.fillna(0)
@@ -63,7 +68,7 @@ def wordsPerDay(conversationList, featureDict, outputPath, self, indOrGroup):
                 except KeyError:
                     featureDict[message['sender_name']][ms2dt(message['timestamp_ms']).date()] = len(message['content'].split(' '))
 
-    featureDF = featureDict2DF(featureDict)
+    featureDF = featureDict2DF(featureDict, self)
 
     # Add zeros for dates when a party sent no messages
     featureDF = featureDF.fillna(0)
@@ -85,7 +90,7 @@ def cumWordDiff(conversationList, featureDict, outputPath, self):
             if 'content' in message:
                 featureDict[message['sender_name']][ms2dt(message['timestamp_ms'])] = len(message['content'].split(' '))
 
-    featureDF = featureDict2DF(featureDict)
+    featureDF = featureDict2DF(featureDict, self)
 
     # Add zeros for dates when one party sent no messages
     featureDF = featureDF.fillna(0)
@@ -102,7 +107,7 @@ def cumMessageDiff(conversationList, featureDict, outputPath, self):
         for message in conversation['messages']:
             featureDict[message['sender_name']][ms2dt(message['timestamp_ms'])] = 1
 
-    featureDF = featureDict2DF(featureDict)
+    featureDF = featureDict2DF(featureDict, self)
 
     # Add zeros for dates when one party sent no messages
     featureDF = featureDF.fillna(0)
@@ -114,13 +119,13 @@ def cumMessageDiff(conversationList, featureDict, outputPath, self):
 
 
 # Construct timeseries of the running average number of words per message sent for each participant
-def avgWordsPerMessage(conversationList, featureDict, outputPath, self, indOrGroup):
+def avgWordsPerMessage(conversationList, featureDict, outputPath, self):
     for conversation in conversationList:
         for message in conversation['messages']:
             if 'content' in message:
                 featureDict[message['sender_name']][ms2dt(message['timestamp_ms'])] = len(message['content'].split(' '))
 
-    featureDF = featureDict2DF(featureDict)
+    featureDF = featureDict2DF(featureDict, self)
 
     # Get the running average of words per message
     featureDF = featureDF.expanding().mean()

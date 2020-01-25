@@ -53,6 +53,6 @@ if __name__ == '__main__':
     wordsPerDay(jsonConvList, copy.deepcopy(participantDict), outputDir, me, convType)
     cumMessageDiff(jsonConvList, copy.deepcopy(participantDict), outputDir, me)
     cumWordDiff(jsonConvList, copy.deepcopy(participantDict), outputDir, me)
-    avgWordsPerMessage(jsonConvList, copy.deepcopy(participantDict), outputDir, me, convType)
+    avgWordsPerMessage(jsonConvList, copy.deepcopy(participantDict), outputDir, me)
 
     print(str(datetime.datetime.now()) + ': Finished')

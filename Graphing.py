@@ -13,8 +13,8 @@ Functions for graphing the conversation features
 
 # Get range of colours from 'darkblue' to 'tomato'
 def list2Colour(listLen):
-    startColour = (1.0, 0.38823529411764707, 0.2784313725490196)
-    endColour = (0.0, 0.0, 0.5450980392156862)
+    startColour = (0.0, 0.0, 0.5450980392156862)
+    endColour = (1.0, 0.38823529411764707, 0.2784313725490196)
 
     rgb = np.array([np.linspace(sc, ec, listLen) for sc, ec in zip(startColour, endColour)])
 
