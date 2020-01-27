@@ -82,3 +82,22 @@ def graphOverlappingTimeSeries(featureDF, yAxisName, savePath):
 
     plt.legend(handles, labels, loc='upper left')
     plt.savefig(savePath + yAxisName + '.png')
+
+
+# Graph n stacked timeseries
+def graphStackedTimeSeries(featureDF, yAxisName, savePath):
+    plt.figure(figsize=(12, 5), dpi=250)
+    plt.xlabel('Date')
+    plt.ylabel(yAxisName)
+    plt.title('Analysis of Facebook Messages (2011-08-09 to 2020-01-20)')
+
+    colourList = list2Colour(len(featureDF.columns))
+
+    plt.stackplot(list(featureDF.index), featureDF.transpose().values.tolist(), colors=colourList, labels=featureDF.columns)
+
+    plt.grid(True)
+
+    handles, labels = plt.gca().get_legend_handles_labels()
+
+    plt.legend(handles, labels, loc='upper left')
+    plt.savefig(savePath + yAxisName + '.png')

@@ -28,6 +28,7 @@ def featureDict2DF(featureDict, self):
 
     otherParticipants = list(featureDF.columns)
     otherParticipants.remove(self)
+    otherParticipants.sort(key=str.lower)
 
     featureDF = featureDF[otherParticipants + [self]]
 
@@ -131,3 +132,34 @@ def avgWordsPerMessage(conversationList, featureDict, outputPath, self):
     featureDF = featureDF.expanding().mean()
 
     graphOverlappingTimeSeries(featureDF, 'Running Average of Words Per Message', outputPath)
+
+
+# Construct timeseries of the number of messages I've sent per day across all conversations
+# Messages sent to group chats are equivalent to sending a message to each person in the chat
+def messagesSentPerDay(conversationList, featureDict, outputPath, self):
+    for conversation in conversationList:
+        for message in conversation['messages']:
+            if message['sender_name'] == self:
+                for participant in conversation['participants']:
+                    try:
+                        featureDict[participant['name']][ms2dt(message['timestamp_ms']).date()] += 1
+                    except KeyError:
+                        featureDict[participant['name']][ms2dt(message['timestamp_ms']).date()] = 1
+
+    featureDF = featureDict2DF(featureDict, self)
+
+    # Add zeros for dates when a party sent no messages
+    featureDF = featureDF.fillna(0)
+
+    # Remove total number of messages sent
+    featureDF = featureDF.drop(self, 1)
+
+    # Create dataframe of percent of messages sent to each participatn
+    percentFeatureDF = featureDF.div(featureDF.sum(axis=1), axis=0)
+
+    # Add missing dates as zeros for all parties
+    idx = pd.date_range(list(featureDF.index)[0], list(featureDF.index)[-1])
+    featureDF = featureDF.reindex(idx, fill_value=0)
+
+    graphStackedTimeSeries(featureDF, 'Messages Sent Per Day (Nominal)', outputPath)
+    graphStackedTimeSeries(percentFeatureDF, 'Messages Sent Per Day (Percent)', outputPath)
