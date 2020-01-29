@@ -119,7 +119,7 @@ def graphBarchart(featureDict, xAxisName, yAxisName, savePath, selfName):
     participantIndex = 0
     participantBars = []
 
-    for participant in [part for part in featureDict if part != selfName]:
+    for participant in sorted([part for part in featureDict if part != selfName]):
         participantBars += [(participant, plt.gca().bar(x + (width / 2) + (width * participantIndex),
                                                         [x[1] for x in featureDict[participant]],
                                                         width, color=colourList[participantIndex], label=participant))]
