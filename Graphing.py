@@ -7,7 +7,7 @@ Author: Jonathan Chow
 Date Modified: 2020-01-20
 Python Version: 3.7
 
-Functions for graphing the conversation features
+Functions for graphing conversation features
 '''
 
 
@@ -101,3 +101,53 @@ def graphStackedTimeSeries(featureDF, yAxisName, savePath):
 
     plt.legend(handles, labels, loc='upper left')
     plt.savefig(savePath + yAxisName + '.png')
+
+
+# Graph n barcharts
+def graphBarchart(featureDict, xAxisName, yAxisName, savePath, selfName):
+    labels = list(range(1, len(featureDict[selfName]) + 1))
+    x = np.arange(0, len(labels))
+    width = 0.9 / len(featureDict)
+
+    plt.figure(figsize=(12, 5), dpi=250)
+    plt.xlabel(xAxisName)
+    plt.ylabel(yAxisName)
+    plt.title('Analysis of Facebook Messages (2011-08-09 to 2020-01-20)')
+
+    colourList = list2Colour(len(featureDict))
+
+    participantIndex = 0
+    participantBars = []
+
+    for participant in [part for part in featureDict if part != selfName]:
+        participantBars += [(participant, plt.gca().bar(x + (width / 2) + (width * participantIndex),
+                                                        [x[1] for x in featureDict[participant]],
+                                                        width, color=colourList[participantIndex], label=participant))]
+        participantIndex += 1
+
+    participantBars += [(selfName, plt.gca().bar(x + (width / 2) + (width * participantIndex),
+                                                    [x[1] for x in featureDict[selfName]],
+                                                    width, color=colourList[participantIndex], label=selfName))]
+
+    plt.gca().set_xticks(x)
+    plt.gca().set_xticklabels(labels)
+
+    handles, labels = plt.gca().get_legend_handles_labels()
+
+    plt.legend(handles, labels, loc='upper right')
+
+    for participant in participantBars:
+        participantIndex = 0
+
+        for rect in participant[1]:
+            height = rect.get_height()
+
+            plt.gca().annotate(featureDict[participant[0]][participantIndex][0],
+                               xy=(rect.get_x() + rect.get_width() / 2, height),
+                               xytext=(0, 1),  # 3 points vertical offset
+                               textcoords='offset points',
+                               ha='center', va='bottom', fontsize=5)
+
+            participantIndex += 1
+
+    plt.savefig(savePath + xAxisName + '.png')

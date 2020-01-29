@@ -38,8 +38,7 @@ def analyzeSpecificConversation(archive, convName, me, convType, outputDir):
             break
 
     # Create dictionary of all participants
-    participantList = list(
-        set(parDict['name'] for conversation in jsonConvList for parDict in conversation['participants']))
+    participantList = list(set(parDict['name'] for conversation in jsonConvList for parDict in conversation['participants']))
     participantDict = {participant: {} for participant in participantList}
 
     messagesPerDay(jsonConvList, copy.deepcopy(participantDict), outputDir, me, convType)
@@ -47,6 +46,8 @@ def analyzeSpecificConversation(archive, convName, me, convType, outputDir):
     cumMessageDiff(jsonConvList, copy.deepcopy(participantDict), outputDir, me)
     cumWordDiff(jsonConvList, copy.deepcopy(participantDict), outputDir, me)
     avgWordsPerMessage(jsonConvList, copy.deepcopy(participantDict), outputDir, me)
+    convInterest(jsonConvList, copy.deepcopy(participantDict), outputDir)
+    commonWords(jsonConvList, copy.deepcopy(participantDict), outputDir, me)
 
 
 def analyzeAllConversations(archive, me, outputDir):
@@ -73,6 +74,8 @@ def analyzeAllConversations(archive, me, outputDir):
     participantDict = {participant: {} for participant in participantList}
 
     messagesSentPerDay(jsonConvList, copy.deepcopy(participantDict), outputDir, me)
+    cumWordUse(jsonConvList, outputDir, me)
+    breakLength(jsonConvList, outputDir, me)
 
 
 if __name__ == '__main__':
